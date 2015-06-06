@@ -2,6 +2,7 @@
 layout: page
 title: About
 permalink: /about/
+group: navigation
 ---
 
 My name is Shashank Ramaprasad. I am currently a Software Architect at [Adobe Systems, Inc.](http://www.adobe.com/),
