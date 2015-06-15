@@ -18,7 +18,7 @@ false positives.
 The error rate $$\epsilon$$ for a Bloom filter is:
 
 $$
-Pr(\text{YES} | x \notin S) = \epsilon .
+Pr(\text{YES} \vert x \notin S) = \epsilon .
 $$
 
 To find an overlap
@@ -39,7 +39,7 @@ given that no element in $$Q$$ belongs to $$S$$.
 It follows directly from the definition of the error rate that:
 
 $$
-Pr(\text{NO} | q \notin S) = 1 - \epsilon .
+Pr(\text{NO} \vert q \notin S) = 1 - \epsilon .
 $$
 
 Assuming independence of Bloom filter output for the different elements of $$Q$$,
