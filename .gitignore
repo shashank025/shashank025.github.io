@@ -10,3 +10,7 @@ Thumbs.db
 .rvmrc
 
 *~
+
+.sass-cache/
+
+Gemfile.lock
