@@ -1,18 +1,18 @@
 ---
 layout: post
-title: "Reverse engineering the Metacritic weights for movie critics"
+title: "Reverse engineering Metacritic"
 description: ""
 category: 
 tags: []
 ---
 {% include JB/setup %}
 
+_Note: All related code is available on [my github](https://github.com/shashank025/metacritic-weights)._
+
 [metacritic](http://www.metacritic.com/) is a popular site that computes an
 aggregate _metascore_ for each movie as a weighted average of individual critic scores.
-The [Wikipedia article on metacritic](http://en.wikipedia.org/wiki/Metacritic) says:
-
-> Reviews from major periodicals may have a greater effect on average than niche ones ...
-
+Reviewers from major periodicals may have a greater effect on a movie review
+on average than niche ones.
 Tantalizingly, the [metacritic FAQ Page](http://www.metacritic.com/faq) says:
 
 > Q: Can you tell me how each of the different critics are weighted in your formula?
@@ -20,127 +20,146 @@ Tantalizingly, the [metacritic FAQ Page](http://www.metacritic.com/faq) says:
 > A: Absolutely not. 
 
 That sounds like a challenge to me.
-It _should_ be possible to infer the weights using standard machine learning techniques.
+It _should_ be possible to infer the relative weights for movie critics
+using standard machine learning techniques.
 In fact, if we do this right, we should be able to correctly predict the metascore
 for any new movie (given the individual critic ratings).
 
 This post describes my attempt to build such a system.
 
-### Notation and Constraints
+### Notation, Assumptions and Constraints
 
 We introduce the following notations and assumptions:
 
-* metacritic uses ratings from $$m$$ critics.
-* Our data set has $$n$$ movies.
-* $$x_{ij}$$ is the rating of movie $$i$$ by critic $$j$$.
+* metacritic uses ratings from $$n$$ critics.
+* Our data set has $$m$$ movies.
+* $$r_{ij}$$ is the rating of movie $$i$$ by critic $$j$$.
+This forms an $$m \times n$$ matrix.
    * Not all critics rate all movies!
-     In other words, $$x_{ij}$$ is not defined for all $$i$$ and $$j$$.
-   * Where defined, the values are constrained: $$0 \leq x_{ij} \leq 100$$.
+     In other words, $$r_{ij}$$ may not be defined for all $$i$$ and $$j$$.
+   * Where defined, the values are constrained: $$0 \leq r_{ij} \leq 100$$.
 * $$\theta_j$$ is the _relative weight_ (or importance) of critic $$j$$
 (this is what we are trying to _learn_).
    * Critic weights must be _positive_ (otherwise, why consider the critic at all),
      _i.e._, $$\theta_j > 0$$ for all $$j$$,
-   * Critic weights must add up to one, _i.e._, $$\sum_{j=1}^m \theta_j = 1$$.
-     In other words, the solution space forms a _bounded hyperplane_.
+   * Critic weights must add up to one, _i.e._, $$\sum_{j=1}^n \theta_j = 1$$.
+   * Critic weights stay constant across movies (but may get updated over time).
+   * The $$n$$-dimensional vector
+     $$\theta = (\theta_1, \theta_2, \ldots, \theta_n)$$
+     represents _a solution_, a possible assignment of weights to critics.
+   * Due to the above constraints, the solution space of $$\theta$$ forms
+     an _[affine hyperplane](https://en.wikipedia.org/?title=Hyperplane#Affine_hyperplanes)_.
 * $$p_i$$ is the _published_ metascore for movie $$i$$.
-   * These values are also constrained: $$0 \leq p_{i} \leq 100$$ for all $$i$$.
-* $$y_i$$ is the _predicted_ metascore for movie $$i$$.
+   * These values are also constrained: $$0 \leq p_i \leq 100$$ for all $$i$$.
+* $$y_i(\theta)$$ is the _predicted_ metascore for movie $$i$$
+for a given choice of relative weights.
+   * We will drop the $$\theta$$ when it is obvious.
+* $$p = (p_1, p_2, \ldots, p_m)$$ and $$y(\theta) = (y_1(\theta), y_2(\theta), \ldots, y_m(\theta))$$
+are vectorized forms we will use for conciseness later.
 
-While it is clear that $$y_i$$ is a function of the $$x_{ij}$$ and $$\theta_j$$ values,
-we will defer the exact definition until a little later.
-
-## Objective
-
-The $$m$$-dimensional vector
-$$\theta = (\theta_1, \theta_2, \ldots, \theta_m)$$
-represents _a_ possible assignment of weights to critics.
-Our task is to find a $$\theta$$ that (a) fits our data set
-well, and (b) is capable of predicting ratings for movies
-not in the training set.
-On the face of it, this seems to be a standard
-least squares problem of finding a $$\theta$$ that
-minimizes the value of the following expression
-(subject to the stated constraints):
+An obvious definition of $$y_i(\theta)$$
+is simply a weighted sum:
 
 $$
-\sum_{i = 1}^{n} (p_i - y_i)^2.
-$$
-
-In fact, it looks like
-$$y_i$$, the predicted metascore for movie $$i$$ is
-simply a weighted sum:
-
-$$
-y_i = \sum_{j=1}^m \theta_j x_{ij}.
+y_i(\theta) = \sum_{j=1}^n \theta_j r_{ij}.
 $$
 
 But remember:
  _Not all critics rate all movies_.
 
-In other words, the summation above is not valid, since
-not all the $$x_{ij}$$ values are _defined_.
-How do we deal with this _incomplete_ matrix $$x_{ij}$$?
+In other words, the summation above may not be valid,
+since not all $$r_{ij}$$ values are necessarily _defined_.
+How do we deal with this _incomplete_ matrix $$r_{ij}$$?
 My best guess is that metacritic _normalizes_ its scores
 using the available ratings.
 For example, if the movie with $$i = 4$$
-was only rated by two critics ($$j = 2$$ and $$j = 7$$), we would get:
+was only rated by two critics ($$j = 2$$ and $$j = 7$$),
+metacritic computes a metascore like so:
 
 $$
-    y_4 = \frac{\theta_2 x_{42} + \theta_7 x_{47}}{\theta_2 + \theta_7}.
+    y_4 = \frac{\theta_2 r_{42} + \theta_7 r_{47}}{\theta_2 + \theta_7}.
 $$
 
 In fact, the metacritic FAQ page says they wait until
 a movie has at least 4 reviews before computing a metascore.
-In other words, they want at least 4 defined $$x_{ij}$$ values
-for a given $$i$$ before computing $$y_{ij}$$.
+So they want at least 4 defined $$r_{ij}$$ values
+for a given $$i$$.
 Lets define the following additional variables:
 
-* $$x'_{ij} = x_{ij}$$ if movie $$i$$ is rated by critic $$j$$
+* $$r'_{ij} = r_{ij}$$ if movie $$i$$ is rated by critic $$j$$
 and $$0$$ otherwise.
-* $$e_{ij} = 1$$ if movie $$i$$ is rated by critic $$j$$, and $$0$$ otherwise.
+* $$e_{ij} = 1$$ if movie $$i$$ is rated by critic $$j$$, and $$0$$ otherwise. $$e$$ is essentially an _indicator_ variable.
 
-We can now generalize the _modified_ definition for the
-predicted metascore for movie $$i$$ as:
-
-$$
-y_i = \frac{ \sum_{j=1}^m \theta_j x'_{ij} }{ \sum_{j=1}^{m} \theta_j e_{ij} }.
-$$
-
-The point of discussing the complication above is that
-we _cannot_ use standard linear regression, since
-there are _holes_ in the $$x_{ij}$$ matrix.
-
-### Complications
-
+Using these, we modify the definition for $$y_i$$:
 
 $$
-\theta_1 x_{i1} + \theta_2 x_{i2} + \ldots + \theta_n x_{in}.
+y_i(\theta) = \frac{ \sum_{j=1}^n \theta_j r'_{ij} }{ \sum_{j=1}^n \theta_j e_{ij} }.
 $$
 
+## Objective
 
+Consider the $$m$$-vector $$d(\theta)$$ defined as:
 
-Formal model: Constrained Linear Least Squares
+$$
+d(\theta) = p - y(\theta).
+$$
 
-With some simple algebra involving rearranging of terms above, we realize that we can formulate our problem thus:
+This vector represents the _error_ or distance between
+the actual metascores and predicted ones for
+a given $$\theta$$.
 
-With a training set of m movies, find a value for theta (a vector) that best fits this series of equations:
+Our objective is to find a $$\theta$$
+that minimizes $$\Vert d(\theta) \Vert$$
+(the [$$L^2$$ norm](https://en.wikipedia.org/wiki/Lp_space)
+of the error vector $$e$$)
+subject to the previously listed constraints.
 
-  theta[1] * z[i][1] + theta[2] * z[i][2] + ... + theta[n] * z[i][n] = 0     for i = 1, 2, ..., m,
+Notice that $$d$$ is not a _linear_ function of $$\theta$$
+(because of the reciprocal term in $$y(\theta)$$).
+So, we cannot use any of the techniques used to solve
+[linear least squares](https://en.wikipedia.org/wiki/Linear_least_squares_%28mathematics%29).
+But we _can_ formulate the problem as a standard
+[constrained minimization problem](https://en.wikipedia.org/wiki/Constrained_optimization).
+In fact, I use the handy
+[optimize.minimize()](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize)
+function of the [scipy](http://www.scipy.org/) library.
 
-where:
+Here is the gist of the Python code for the same:
 
-    z[i][j] = x[i][j] - y[i]     if movie i was rated by critic j
-    z[i][j] = 0                  otherwise
+~~~
+# preliminaries
+r = <m x n rating matrix>
+r_dash = <m x n rating matrix with holes filled>
+e = <m x n indicator matrix>
+x = <m vector of published metascores>
 
-Expressed in matrix-vector form, our task is to find a value for the vector theta that best fits the equation
+def y(theta):
+    """theta is an n x 1 column vector"""
+    numerator = r_dash * theta   # each of these is an m-vector:
+    denom = e * theta            # (m x n) times (n x 1).
+    # element-wise division
+    return ewd(numerator, denom)
 
-    z . theta = 0
+def error_fn(theta):
+    """returns an m vector"""
+    return x - y(theta)
 
-subject to the constraints described above. This is the classic linear least squares model with constraints.
+def objective(theta):
+    """ Objective function """
+    return scipy.linalg.norm(error_fn(theta))
 
-Note that in the above formulation:
+# all theta values are positive
+theta_bound = (1e-9, None)
+theta_bounds = theta_bound * m
 
-    z, theta and 0 are vectors of dimensions m x n, n x 1 and m x 1 respectively,
-    the dot (.) represents matrix multiplication.
-    m >> n: there are way more movies than critics. In other words, the system is overdetermined.
-    Quite a few elements of z are zeros. 
+constraints = ({
+    'type': 'eq',
+    'fun' : lambda theta: sum(theta) - 1},)
+
+theta_initial = 1.0/n * n
+res = minimize(objective,
+               theta_initial,
+               bounds=theta_bounds,
+               constraints=constraints,
+               method='SLSQP')
+~~~
