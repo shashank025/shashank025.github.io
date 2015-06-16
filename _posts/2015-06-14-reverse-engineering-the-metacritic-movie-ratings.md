@@ -111,7 +111,7 @@ a given $$\theta$$.
 Our objective is to find a $$\theta$$
 that minimizes $$\Vert d(\theta) \Vert$$
 (the [$$L^2$$ norm](https://en.wikipedia.org/wiki/Lp_space)
-of the error vector $$e$$)
+of the error vector $$d$$)
 subject to the previously listed constraints.
 
 Notice that $$d$$ is not a _linear_ function of $$\theta$$
