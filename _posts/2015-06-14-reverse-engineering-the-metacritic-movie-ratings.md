@@ -27,9 +27,9 @@ for any new movie (given the individual critic ratings).
 
 This post describes my attempt to build such a system.
 
-### Notation, Assumptions and Constraints
+### The Model
 
-We introduce the following notations and assumptions:
+We introduce some notations and assumptions about the problem:
 
 * metacritic uses ratings from $$n$$ critics.
 * Our data set has $$m$$ movies.
@@ -40,15 +40,19 @@ This forms an $$m \times n$$ matrix.
    * Where defined, the values are constrained: $$0 \leq r_{ij} \leq 100$$.
 * $$\theta_j$$ is the _relative weight_ (or importance) of critic $$j$$
 (this is what we are trying to _learn_).
-   * Critic weights must be _positive_ (otherwise, why consider the critic at all),
+   * There is no point in having a critic weight of $$0$$
+     (why even consider a critic whose rating isn't worth anything).
+   * In light of the previous point, we constrain
+     critic weights to be _positive_,
      _i.e._, $$\theta_j > 0$$ for all $$j$$,
-   * Critic weights must add up to one, _i.e._, $$\sum_{j=1}^n \theta_j = 1$$.
+   * Since these weights are relative, they must add up to one,
+     _i.e._, $$\sum_{j=1}^n \theta_j = 1$$.
    * Critic weights stay constant across movies (but may get updated over time).
    * The $$n$$-dimensional vector
      $$\theta = (\theta_1, \theta_2, \ldots, \theta_n)$$
      represents _a solution_, a possible assignment of weights to critics.
    * Due to the above constraints, the solution space of $$\theta$$ forms
-     an _[affine hyperplane](https://en.wikipedia.org/?title=Hyperplane#Affine_hyperplanes)_.
+     a _bounded, [affine hyperplane](https://en.wikipedia.org/wiki/Hyperplane#Affine_hyperplanes)_.
 * $$p_i$$ is the _published_ metascore for movie $$i$$.
    * These values are also constrained: $$0 \leq p_i \leq 100$$ for all $$i$$.
 * $$y_i(\theta)$$ is the _predicted_ metascore for movie $$i$$
@@ -96,35 +100,45 @@ $$
 y_i(\theta) = \frac{ \sum_{j=1}^n \theta_j r'_{ij} }{ \sum_{j=1}^n \theta_j e_{ij} }.
 $$
 
-## Objective
-
-Consider the $$m$$-vector $$d(\theta)$$ defined as:
+With these definitions in place,
+we will try to find a $$\theta$$
+satisfying:
 
 $$
-d(\theta) = p - y(\theta).
+\DeclareMathOperator*{\argmin}{\arg\!\min}
+
+\argmin_{\theta} \Vert p - y(\theta) \Vert
 $$
 
-This vector represents the _error_ or distance between
+subject to:
+
+* $$\sum_{j=1}^n \theta_j = 1$$,
+* $$\theta_j > 0$$ for all $$j$$.
+
+This is a standard
+[constrained minimization problem](https://en.wikipedia.org/wiki/Constrained_optimization).
+Our expectation is that any solution $$\theta$$
+(a) fits the training set well, and
+(b) also predicts metascores for new movies.
+
+The $$m$$-vector $$d(\theta) = p - y(\theta)$$
+represents the _error_ or distance between
 the actual metascores and predicted ones for
 a given $$\theta$$.
-
-Our objective is to find a $$\theta$$
-that minimizes $$\Vert d(\theta) \Vert$$
-(the [$$L^2$$ norm](https://en.wikipedia.org/wiki/Lp_space)
-of the error vector $$d$$)
-subject to the previously listed constraints.
-
 Notice that $$d$$ is not a _linear_ function of $$\theta$$
 (because of the reciprocal term in $$y(\theta)$$).
-So, we cannot use any of the techniques used to solve
-[linear least squares](https://en.wikipedia.org/wiki/Linear_least_squares_%28mathematics%29).
-But we _can_ formulate the problem as a standard
-[constrained minimization problem](https://en.wikipedia.org/wiki/Constrained_optimization).
-In fact, I use the handy
-[optimize.minimize()](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize)
-function of the [scipy](http://www.scipy.org/) library.
+So, we cannot use
+[linear least squares](https://en.wikipedia.org/wiki/Linear_least_squares_%28mathematics%29)
+or similar linear solvers.
+But we _can_ use nonlinear solvers.
+I used the well known
+[Sequential Least Squares Least Squares Programming
+solver](http://docs.scipy.org/doc/scipy-0.13.0/reference/generated/scipy.optimize.fmin_slsqp.html)
+available as part of
+[scipy.optimize](http://docs.scipy.org/doc/scipy-0.13.0/reference/optimize.html).
 
-Here is the gist of the Python code for the same:
+The rest of this post describes my attempt
+to build a data pipeline.
 
 ~~~
 # preliminaries
