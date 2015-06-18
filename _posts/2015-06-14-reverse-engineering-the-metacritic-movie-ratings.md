@@ -7,6 +7,8 @@ tags: []
 ---
 {% include JB/setup %}
 
+<img src="/assets/images/spend_curve.png" width="200" height="200" title="Spend curve" alt="Spend curve" />
+
 _Note: All related code is available on [my github](https://github.com/shashank025/metacritic-weights)._
 
 [metacritic](http://www.metacritic.com/) is a popular site that computes an
@@ -68,11 +70,10 @@ $$
 y_i(\theta) = \sum_{j=1}^n \theta_j r_{ij}.
 $$
 
-But remember:
+But there is a problem with this definition. Remember:
  _Not all critics rate all movies_.
-
-In other words, the summation above may not be valid,
-since not all $$r_{ij}$$ values are necessarily _defined_.
+In other words, the summation above may be invalid,
+since not all $$r_{ij}$$ values are necessarily defined.
 How do we deal with this _incomplete_ matrix $$r_{ij}$$?
 My best guess is that metacritic _normalizes_ its scores
 using the available ratings.
@@ -104,7 +105,7 @@ y_i(\theta) = \frac{ \sum_{j=1}^n \theta_j r'_{ij} }{ \sum_{j=1}^n \theta_j e_{i
 $$
 
 Consider the $$m$$-vector $$d(\theta) = p - y(\theta)$$.
-This value represents a measure of how _off_ the predictions
+This vector represents a measure of how _off_ the predictions
 are from actual metascores for
 a given $$\theta$$.
 We will try to find a $$\theta$$
@@ -161,7 +162,7 @@ f(\theta) = \Vert p - y(\theta) \Vert
      + P_b \times \sum_{j = 1}^n t(\theta_j, 0, 1),
 $$
 
-where $$P_h$$ and $$P_b$$ are weights that decide
+where $$P_h$$ and $$P_b$$ are configurable weights that decide
 how much we should _penalize_ the optimization algorithm when it
 chooses a $$\theta$$ that doesn't lie on the affine hyperplane,
 and when it chooses $$\theta_j$$ values outside the interval
