@@ -103,9 +103,16 @@ $$
 y_i(\theta) = \frac{ \sum_{j=1}^n \theta_j r'_{ij} }{ \sum_{j=1}^n \theta_j e_{ij} }.
 $$
 
-With these definitions in place,
-we will try to find a $$\theta$$
-satisfying:
+Consider the $$m$$-vector $$d(\theta) = p - y(\theta)$$.
+This value represents a measure of how _off_ the predictions
+are from actual metascores for
+a given $$\theta$$.
+We will try to find a $$\theta$$
+that minimizes the value of the function
+$$f(\theta) = \Vert d(\theta) \Vert$$,
+where $$\Vert \cdot \Vert$$ represents the
+[$$L^2$$ norm](https://en.wikipedia.org/wiki/Lp_space).
+Formally,
 
 $$
 \DeclareMathOperator*{\argmin}{\arg\!\min}
@@ -124,39 +131,42 @@ Our expectation is that any solution $$\theta$$
 of the above system
 _(a)_ fits the training set well, and
 _(b)_ also predicts metascores for new movies.
-
-The $$m$$-vector $$d(\theta) = p - y(\theta)$$
-represents the _error_ or distance between
-the actual metascores and predicted ones for
-a given $$\theta$$.
 Notice that $$d$$ is not a _linear_ function of $$\theta$$
-(because of the reciprocal term in $$y(\theta)$$).
+because of the reciprocal term in $$y(\theta)$$.
 So, we have to use a
-[nonlinear solver](https://en.wikipedia.org/wiki/Nonlinear_programming).
-I used the well known
+[nonlinear solver](https://en.wikipedia.org/wiki/Nonlinear_programming)
+(I use the
 [Sequential Least Squares Programming solver](http://docs.scipy.org/doc/scipy-0.13.0/reference/generated/scipy.optimize.fmin_slsqp.html)
 available as part of
-[scipy.optimize](http://docs.scipy.org/doc/scipy-0.13.0/reference/optimize.html).
+[scipy.optimize](http://docs.scipy.org/doc/scipy-0.13.0/reference/optimize.html)).
 
 Also, because a lot of solvers work on _unconstrained_ problems,
-we modify our objective function $$f(\theta) = \Vert p - y(\theta) \Vert$$
-by also include the constraints.
+we employ a common technique in optimization formulations,
+which is to _push_ the constraints into the objective function.
 
-Consider the _tub_ function $$t(x, l, u)$$ defined as:
+Consider the "tub" function $$t(x, l, u)$$ defined as:
 
 $$
 t(x, l, u) =
   \begin{cases}
-    1       & \quad \text{if } l \leq x \leq u, \\
-    0       & \quad \text{otherwise}.
+    0       & \quad \text{if } l \leq x \leq u, \\
+    1       & \quad \text{otherwise}.
   \end{cases}
 $$
 
-So, our modified objective function becomes:
+Our modified objective function becomes:
 
 $$
-f(\theta) = \Vert p - y(\theta) \Vert + P_h \times \Vert \sum_{j=1}^n 1 - \theta_j \Vert + P_b \times \sum_{j = 1}^n t(\theta_j, 0, 1).
+f(\theta) = \Vert p - y(\theta) \Vert
+     + P_h \times \Vert 1 - \sum_{j=1}^n \theta_j \Vert
+     + P_b \times \sum_{j = 1}^n t(\theta_j, 0, 1),
 $$
+
+where $$P_h$$ and $$P_b$$ are weights that decide
+how much we should _penalize_ the optimization algorithm when it
+chooses a $$\theta$$ that doesn't lie on the affine hyperplane,
+and when it chooses $$\theta_j$$ values outside the interval
+$$[0, 1]$$ respectively.
 
 ### The Implementation
 
