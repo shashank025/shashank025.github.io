@@ -41,7 +41,7 @@ This forms an $$m \times n$$ matrix.
 * $$\theta_j$$ is the _relative weight_ (or importance) of critic $$j$$
 (this is what we are trying to _learn_).
    * There is no point in having a critic weight of $$0$$
-     (why even consider a critic whose rating isn't worth anything).
+     (why even consider a critic whose rating does not affect the metascore at all?).
    * In light of the previous point, we constrain
      critic weights to be _positive_,
      _i.e._, $$\theta_j > 0$$ for all $$j$$,
