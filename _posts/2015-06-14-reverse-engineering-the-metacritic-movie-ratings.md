@@ -143,7 +143,6 @@ available as part of
 Also, because a lot of solvers work on _unconstrained_ problems,
 we employ a common technique in optimization formulations,
 which is to _push_ the constraints into the objective function.
-
 Consider the "tub" function $$t(x, l, u)$$ defined as:
 
 $$
@@ -170,40 +169,10 @@ $$[0, 1]$$ respectively.
 
 ### The Implementation
 
-~~~
-# preliminaries
-r = <m x n rating matrix>
-r_dash = <m x n rating matrix with holes filled>
-e = <m x n indicator matrix>
-x = <m vector of published metascores>
+_Coming soon_
 
-def y(theta):
-    """theta is an n x 1 column vector"""
-    numerator = r_dash * theta   # each of these is an m-vector:
-    denom = e * theta            # (m x n) times (n x 1).
-    # element-wise division
-    return ewd(numerator, denom)
+### Results
 
-def error_fn(theta):
-    """returns an m vector"""
-    return x - y(theta)
+_Coming soon_
 
-def objective(theta):
-    """ Objective function """
-    return scipy.linalg.norm(error_fn(theta))
 
-# all theta values are positive
-theta_bound = (1e-9, None)
-theta_bounds = theta_bound * m
-
-constraints = ({
-    'type': 'eq',
-    'fun' : lambda theta: sum(theta) - 1},)
-
-theta_initial = 1.0/n * n
-res = minimize(objective,
-               theta_initial,
-               bounds=theta_bounds,
-               constraints=constraints,
-               method='SLSQP')
-~~~
