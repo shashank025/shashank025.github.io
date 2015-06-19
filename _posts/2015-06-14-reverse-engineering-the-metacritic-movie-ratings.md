@@ -75,14 +75,20 @@ But there is a problem with this definition. Remember:
 In other words, the summation above may be invalid,
 since not all $$r_{ij}$$ values are necessarily defined.
 How do we deal with this _incomplete_ matrix $$r_{ij}$$?
-My best guess is that metacritic _normalizes_ its scores
-using the available ratings.
-For example, if the movie with $$i = 4$$
-was only rated by two critics ($$j = 2$$ and $$j = 7$$),
-metacritic computes a metascore like so:
+My best guess is that metacritic normalizes the metascore
+over the available critic weights.
+For example,
+assume that  the movie
+[Mad Max: Fury Road](http://www.imdb.com/title/tt1392190/),
+has an index $$i = 4$$ in our data set.
+Assume that only
+two critics, with weights $$\theta_1$$ and $$\theta_2$$
+have rated this movie,
+and their ratings are $$r_{41} = 79$$ and $$r_{42} = 67$$ respectively.
+Its metascore is then
 
 $$
-    y_4 = \frac{\theta_2 r_{42} + \theta_7 r_{47}}{\theta_2 + \theta_7}.
+    y_4(\theta_1, \theta_2) = \frac{\theta_1 r_{41} + \theta_2 r_{42}}{\theta_1 + \theta_2}.
 $$
 
 In fact, the metacritic FAQ page says they wait until
@@ -104,14 +110,13 @@ $$
 y_i(\theta) = \frac{ \sum_{j=1}^n \theta_j r'_{ij} }{ \sum_{j=1}^n \theta_j e_{ij} }.
 $$
 
-Note that $$y_i (\theta)$$ is
-_not_ a linear function of theta, because of the
-reciprocal term.
-The following
-[plot of the function](https://github.com/shashank025/metacritic-weights/blob/master/ytheta.py)
-$$y(\theta_1, \theta_2) = \frac{79 \theta_1 + 67 \theta_2}{\theta_1 + \theta_2}$$ makes this clear.
-But the function is still _smooth_, by which I mean _differentiable_, which
-is actually an essential property for using many solvers.
+How does this function vary with $$\theta$$?
+I wrote up
+[ a little script to plot $$y_4 (\theta_1, \theta_2)$$](https://github.com/shashank025/metacritic-weights/blob/master/ytheta.py)
+for the Mad Max example from above.
+The following image of the plot makes it clear that
+$$y_i (\theta)$$ is _not_ linear in $$\theta$$.
+But the function is still _smooth_ (_i.e._, _differentiable_).
 
 <a href="/assets/images/plot-of-y-theta.png">
 <img
@@ -153,8 +158,8 @@ Notice that $$d$$ is not a _linear_ function of $$\theta$$
 because $$y(\theta)$$ isn't either.
 So, we have to use a
 [nonlinear solver](https://en.wikipedia.org/wiki/Nonlinear_programming).
-Further, a lot of solvers work on _unconstrained_ problems.
-So we employ a common technique in optimization formulations,
+Further, many solvers only work on _unconstrained_ problems.
+So, we employ a common technique in optimization formulations,
 which is to push the constraints _into the objective function_.
 Consider the "tub" function $$t(x, l, u)$$ defined as:
 
@@ -170,8 +175,8 @@ Our modified objective function becomes:
 
 $$
 f(\theta) = \Vert p - y(\theta) \Vert
-     + P_h \times \Vert 1 - \sum_{j=1}^n \theta_j \Vert
-     + P_b \times \sum_{j = 1}^n t(\theta_j, 0, 1),
+     + P_h \cdot \Vert 1 - \sum_{j=1}^n \theta_j \Vert
+     + P_b \cdot \sum_{j = 1}^n t(\theta_j, 0, 1),
 $$
 
 where $$P_h$$ and $$P_b$$ are configurable weights that decide
@@ -182,7 +187,8 @@ $$[0, 1]$$ respectively.
 
 ### The Implementation
 
-The general implementation pipeline consists of the following stages:
+With all that annoying math out of the way, lets write code!
+The implementation pipeline consists of the following stages:
 
 1. Collect movie ratings data from metacritic.
 2. Preprocess the data:
@@ -193,11 +199,11 @@ The general implementation pipeline consists of the following stages:
 5. Compute accuracy against the test set.
 6. Output the results.
 
-It turns out that the venerable Makefile is really well suited to
+It turns out that a Makefile is really well suited to
 building these kinds of pipelines,
-where each stage produces a file that becomes a Make target.
+where each stage produces a _file_ that can be used as a Make target
+for that stage.
 Each stage can be dependent on files produced in one or more previous stages.
-I describe this in greater detail in the next sections.
 
 #### Collecting ratings data from metacritic
 
@@ -233,12 +239,12 @@ For example, this structure could look like:
          (89,
           {'Anthony Lane (The New Yorker)': 100,
            'A.A. Dowd (TheWrap)': 95,
-           ...},
+           ...}),
     'http://www.metacritic.com/movie/ex-machina/critic-reviews' ->
          (78,
           {'Steven Rea (Philadelphia Inquier)': 100,
            'Manohla Dargis (The New York Times)': 90,
-           ...},
+           ...}),
     ...
 }
 ~~~
@@ -251,8 +257,9 @@ in a database (sqlite? Postgres?).
 
 The first thing we do is to eliminate from our data set
 the long tail of critics who've rated very few movies.
-These critics are not very influential, and they also
-help reduce $$n$$, which is the _width_ of our matrices.
+Not only are these critics not very influential,
+eliminating them also
+helps reduce $$n$$ (the matrix width).
 Accordingly, there is a configurable _rating count threshold_,
 currently set to $$5$$.
 We do one pass over the ratings data and construct
@@ -293,7 +300,7 @@ _bounds_ and _constraints_ on the optimization system.
 In fact, one can specify an arbitrary number of
 equality and inequality constraints.
 COBYLA, on the other hand, doesn't support bounds,
-or inequality constraints.
+or equality constraints.
 
 ### Results
 
