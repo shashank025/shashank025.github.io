@@ -77,15 +77,14 @@ since not all $$r_{ij}$$ values are necessarily defined.
 How do we deal with this _incomplete_ matrix $$r_{ij}$$?
 My best guess is that metacritic normalizes the metascore
 over the available critic weights.
-For example,
-assume that  the movie
-[Mad Max: Fury Road](http://www.imdb.com/title/tt1392190/),
-has an index $$i = 4$$ in our data set.
-Assume that only
-two critics, with weights $$\theta_1$$ and $$\theta_2$$
-have rated this movie,
-and their ratings are $$r_{41} = 79$$ and $$r_{42} = 67$$ respectively.
-Its metascore is then
+For example, assume that the (excellent) movie
+[Ex Machina](http://www.imdb.com/title/tt0470752/)
+has the index $$i = 4$$ in our data set.
+Assume that only two critics,
+with weights $$\theta_1$$ and $$\theta_2$$
+have currently rated this movie.
+We denote their ratings $$r_{41}$$ and $$r_{42}$$ respectively.
+The metascore for this movie is then
 
 $$
     y_4(\theta_1, \theta_2) = \frac{\theta_1 r_{41} + \theta_2 r_{42}}{\theta_1 + \theta_2}.
@@ -110,11 +109,15 @@ $$
 y_i(\theta) = \frac{ \sum_{j=1}^n \theta_j r'_{ij} }{ \sum_{j=1}^n \theta_j e_{ij} }.
 $$
 
-How does this function vary with $$\theta$$?
+How does this function vary with $$\theta$$ (once we fix the $$r_{ij}$$ values)?
 I wrote up
-[ a little script to plot $$y_4 (\theta_1, \theta_2)$$](https://github.com/shashank025/metacritic-weights/blob/master/ytheta.py)
-for the Mad Max example from above.
-The following image of the plot makes it clear that
+[a little script to plot $$y_4 (\theta_1, \theta_2)$$](https://github.com/shashank025/metacritic-weights/blob/master/ytheta.py)
+for the example involving the movie _Ex Machina_
+(I fixed the critic ratings to
+$$r_{41} = 79$$ and $$r_{42} = 67$$;
+I know. Stupid critics!)
+The following image of the plot
+hopefully makes it clear that
 $$y_i (\theta)$$ is _not_ linear in $$\theta$$.
 But the function is still _smooth_ (_i.e._, _differentiable_).
 
@@ -158,36 +161,10 @@ Notice that $$d$$ is not a _linear_ function of $$\theta$$
 because $$y(\theta)$$ isn't either.
 So, we have to use a
 [nonlinear solver](https://en.wikipedia.org/wiki/Nonlinear_programming).
-Further, many solvers only work on _unconstrained_ problems.
-So, we employ a common technique in optimization formulations,
-which is to push the constraints _into the objective function_.
-Consider the "tub" function $$t(x, l, u)$$ defined as:
-
-$$
-t(x, l, u) =
-  \begin{cases}
-    0       & \quad \text{if } l \leq x \leq u, \\
-    1       & \quad \text{otherwise}.
-  \end{cases}
-$$
-
-Our modified objective function becomes:
-
-$$
-f(\theta) = \Vert p - y(\theta) \Vert
-     + P_h \cdot \Vert 1 - \sum_{j=1}^n \theta_j \Vert
-     + P_b \cdot \sum_{j = 1}^n t(\theta_j, 0, 1),
-$$
-
-where $$P_h$$ and $$P_b$$ are configurable weights that decide
-how much we should _penalize_ the optimization algorithm when it
-chooses a $$\theta$$ that doesn't lie on the affine hyperplane,
-and when it chooses $$\theta_j$$ values outside the interval
-$$[0, 1]$$ respectively.
 
 ### The Implementation
 
-With all that annoying math out of the way, lets write code!
+With (most of the) annoying math out of the way, lets write code!
 The implementation pipeline consists of the following stages:
 
 1. Collect movie ratings data from metacritic.
@@ -255,9 +232,10 @@ in a database (sqlite? Postgres?).
 
 #### Preprocessing
 
-The first thing we do is to eliminate from our data set
+We first eliminate from our data set
 the long tail of critics who've rated very few movies.
-Not only are these critics not very influential,
+Not only are these critics not very influential
+to the overall optimization routine,
 eliminating them also
 helps reduce $$n$$ (the matrix width).
 Accordingly, there is a configurable _rating count threshold_,
@@ -288,24 +266,87 @@ set.
 
 #### Optimization routine
 
-I tried the following solvers, 
+There are numerous "solvers" available for
+constrained optimization problems of the type we
+described above, but not all of them are
+freely available.
+
+I tried the following two solvers, 
 available as part of
 [scipy.optimize](http://docs.scipy.org/doc/scipy-0.13.0/reference/optimize.html):
 
-* [Sequential Least Squares Programming (SLSQP)](http://docs.scipy.org/doc/scipy-0.13.0/reference/generated/scipy.optimize.fmin_slsqp.html)
-* [Constrained Optimization By Linear Approximations (COBYLA)](http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.optimize.fmin_cobyla.html)
+| Solver | Differentiability requirements | Allows bounds? | Allows equality constraints? | Allows inequality constraints? |
+|---------|
+| [Sequential Least Squares Programming (SLSQP)](http://docs.scipy.org/doc/scipy-0.13.0/reference/generated/scipy.optimize.fmin_slsqp.html) | The objective function and the constraints should be twice [continuously differentiable](https://en.wikipedia.org/wiki/Differentiable_function#Differentiability_classes) | Yes | Yes | Yes |
+| [Constrained Optimization By Linear Approximations (COBYLA)](http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.optimize.fmin_cobyla.html) | None | No | No | Yes |
+|---------|
 
-SLSQP allows us to specify both
-_bounds_ and _constraints_ on the optimization system.
-In fact, one can specify an arbitrary number of
-equality and inequality constraints.
-COBYLA, on the other hand, doesn't support bounds,
-or equality constraints.
+
+Note that $$y(\theta)$$ (and therefore $$f(\theta)$$) satisfies
+the differentiability requirement of SLSQP.
+
+Also, COBYLA does not allow you to specify bounds on
+$$\theta$$ values or equality constraints.
+So, we employ a common technique in optimization formulations,
+which is to push the constraints _into the objective function_.
+Consider the "tub" function $$\tau(x, l, u)$$ defined as:
+
+$$
+\tau (x, l, u) =
+  \begin{cases}
+    0       & \quad \text{if } l \leq x \leq u, \\
+    1       & \quad \text{otherwise}.
+  \end{cases}
+$$
+
+Our modified objective function (for use with COBYLA) becomes:
+
+$$
+f(\theta) = \Vert p - y(\theta) \Vert
+     + P_h \cdot \Vert 1 - \sum_{j=1}^n \theta_j \Vert
+     + P_b \cdot \sum_{j = 1}^n \tau(\theta_j, 0, 1),
+$$
+
+where $$P_h$$ and $$P_b$$ are configurable weights that decide
+how much we should _penalize_ the optimization algorithm when it
+chooses a $$\theta$$ that doesn't lie on the affine hyperplane,
+and when it chooses $$\theta_j$$ values outside the interval
+$$[0, 1]$$ respectively.
+Setting both $$P_h$$ and $$P_b$$ to 0 reduces our objective
+function to its original form, so we can use the same
+function for both solvers by simply tweaking these weights.
 
 ### Results
 
-_Coming soon._
+Finally, we can get to the fruits of our labor.
 
+I collected x ratings of y movies by z critics.
+After removing _insignificant_ critics, I was
+left with x' ratings by z' critics.
 
+I chose t of the y movies for my training set.
+
+The top 20 most influential critics,
+as obtained by running SLSQP on this set of movies
+was the following:
+
+...
+
+Also, the corresponding theta values were able
+to predict metascores for the remaining y - t
+movies with an accuracy of r1%.
+
+For another test, I again chose 
+t of the y movies for my training set.
+
+The top 20 most influential critics,
+as obtained by running COBYLA on this set of movies
+was the following:
+
+...
+
+Also, the corresponding theta values were able
+to predict metascores for the remaining y - t
+movies with an accuracy of r2%.
 
 
