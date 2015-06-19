@@ -1,3 +1,5 @@
 Metacritic post:
   - Add an image showing the theta hyperplane.
-  - Display a plot of the function y(theta).
+  X Display a plot of the function y(theta).
+  - discuss how the _stretching_ of computed metascores might affect accuracy.
+  - takeaways: nonlinear programming within everyone's reach!
