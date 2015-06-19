@@ -3,11 +3,9 @@ layout: post
 title: "Reverse engineering Metacritic"
 description: ""
 category: 
-tags: []
+tags: [optimization,metacritic,machine learning,visualization,math,computer science]
 ---
 {% include JB/setup %}
-
-<img src="/assets/images/spend_curve.png" width="200" height="200" title="Spend curve" alt="Spend curve" />
 
 _Note: All related code is available on [my github](https://github.com/shashank025/metacritic-weights)._
 
@@ -23,8 +21,10 @@ Tantalizingly, the [metacritic FAQ Page](http://www.metacritic.com/faq) says:
 
 That sounds like a challenge to me.
 It _should_ be possible to infer the relative weights for movie critics
-using standard machine learning techniques.
-In fact, if we do this right, we should be able to correctly predict the metascore
+using standard machine learning/optimization techniques.
+In fact, if we do this right, not only will we able to
+tell what critics are more important than others,
+but we should also be able to correctly predict the metascore
 for any new movie (given the individual critic ratings).
 
 This post describes my attempt to build such a system.
@@ -104,7 +104,24 @@ $$
 y_i(\theta) = \frac{ \sum_{j=1}^n \theta_j r'_{ij} }{ \sum_{j=1}^n \theta_j e_{ij} }.
 $$
 
-Consider the $$m$$-vector $$d(\theta) = p - y(\theta)$$.
+Note that $$y_i (\theta)$$ is
+_not_ a linear function of theta, because of the
+reciprocal term.
+The following
+[plot of the function](https://github.com/shashank025/metacritic-weights/blob/master/ytheta.py)
+$$y(\theta_1, \theta_2) = \frac{79 \theta_1 + 67 \theta_2}{\theta_1 + \theta_2}$$ makes this clear.
+But the function is still _smooth_, by which I mean _differentiable_, which
+is actually an essential property for using many solvers.
+
+<a href="/assets/images/plot-of-y-theta.png">
+<img
+    width="400" height="300"
+    src="/assets/images/plot-of-y-theta.png"
+    title="Plot of y(theta) - click to zoom"
+    alt="Plot of y(theta) - click to zoom" />
+</a>
+
+Now consider the $$m$$-vector $$d(\theta) = p - y(\theta)$$.
 This vector represents a measure of how _off_ the predictions
 are from actual metascores for
 a given $$\theta$$.
@@ -133,17 +150,12 @@ of the above system
 _(a)_ fits the training set well, and
 _(b)_ also predicts metascores for new movies.
 Notice that $$d$$ is not a _linear_ function of $$\theta$$
-because of the reciprocal term in $$y(\theta)$$.
+because $$y(\theta)$$ isn't either.
 So, we have to use a
-[nonlinear solver](https://en.wikipedia.org/wiki/Nonlinear_programming)
-(I use the
-[Sequential Least Squares Programming solver](http://docs.scipy.org/doc/scipy-0.13.0/reference/generated/scipy.optimize.fmin_slsqp.html)
-available as part of
-[scipy.optimize](http://docs.scipy.org/doc/scipy-0.13.0/reference/optimize.html)).
-
-Also, because a lot of solvers work on _unconstrained_ problems,
-we employ a common technique in optimization formulations,
-which is to _push_ the constraints into the objective function.
+[nonlinear solver](https://en.wikipedia.org/wiki/Nonlinear_programming).
+Further, a lot of solvers work on _unconstrained_ problems.
+So we employ a common technique in optimization formulations,
+which is to push the constraints _into the objective function_.
 Consider the "tub" function $$t(x, l, u)$$ defined as:
 
 $$
@@ -170,10 +182,123 @@ $$[0, 1]$$ respectively.
 
 ### The Implementation
 
-_Coming soon_
+The general implementation pipeline consists of the following stages:
+
+1. Collect movie ratings data from metacritic.
+2. Preprocess the data:
+    * Remove ratings from critics who've rated very few movies, and
+    * Create the $$r'_{ij}$$ and $$e_{ij}$$ matrices.
+3. Partition the data into a _training_ set and a _test_ set.
+4. Find a best fit $$\theta$$ by running the optimization routine on the training set.
+5. Compute accuracy against the test set.
+6. Output the results.
+
+It turns out that the venerable Makefile is really well suited to
+building these kinds of pipelines,
+where each stage produces a file that becomes a Make target.
+Each stage can be dependent on files produced in one or more previous stages.
+I describe this in greater detail in the next sections.
+
+#### Collecting ratings data from metacritic
+
+Unfortunately, metacritic does not, as far as I know,
+have any API's to make this data available easily.
+So I periodically scrape metacritic's
+[New Movie Releases page](http://www.metacritic.com/browse/movies/release-date/theaters/metascore?view=condensed)
+for links to actual metacritic movie pages,
+which I then scrape to get the overall metascore,
+and the individual critic ratings.
+
+I used a combination of
+[xpathtool](http://www.semicomplete.com/projects/xpathtool/)
+and
+the [lxml Python library](http://lxml.de/)
+for the scraping.
+
+The output of this stage is a
+[Python cPickle](https://docs.python.org/2/library/pickle.html)
+dump file that represents a dictionary of the form:
+
+    { movie_url -> (metascore, individual_ratings), ... }
+
+where `individual_ratings` is itself a dictionary of the form
+
+    { critic_name -> numeric_rating, ... }.
+
+For example, this structure could look like:
+
+~~~
+{
+    'http://www.metacritic.com/movie/mad-max-fury-road/critic-reviews' ->
+         (89,
+          {'Anthony Lane (The New Yorker)': 100,
+           'A.A. Dowd (TheWrap)': 95,
+           ...},
+    'http://www.metacritic.com/movie/ex-machina/critic-reviews' ->
+         (78,
+          {'Steven Rea (Philadelphia Inquier)': 100,
+           'Manohla Dargis (The New York Times)': 90,
+           ...},
+    ...
+}
+~~~
+I know cPickle is not exactly the most portable format,
+but it works well at this early stage.
+In the long run, I want to persist all of the ratings data
+in a database (sqlite? Postgres?).
+
+#### Preprocessing
+
+The first thing we do is to eliminate from our data set
+the long tail of critics who've rated very few movies.
+These critics are not very influential, and they also
+help reduce $$n$$, which is the _width_ of our matrices.
+Accordingly, there is a configurable _rating count threshold_,
+currently set to $$5$$.
+We do one pass over the ratings data and construct
+a dictionary of the form:
+
+    { critic_name -> movies_rated, ... }
+
+We then do another pass through the data and remove ratings
+from critics whose `movies_rated` value is lower than the
+threshold.
+
+The second preprocessing step is to construct the
+$$r'_{ij}$$ and $$e_{ij}$$ matrices, which of course
+is
+[a simple matter of programming](https://en.wikipedia.org/wiki/Small_matter_of_programming).
+I store these values as
+[numpy matrices](http://docs.scipy.org/doc/numpy/reference/generated/numpy.matrix.html).
+
+#### Partitioning the data set
+
+This is straightforward.
+I use a configurable `training_frac` parameter
+(a value in the interval $$[0, 1]$$) to probabilistically
+split the cleaned up data into a test set and a training
+set.
+
+#### Optimization routine
+
+I tried the following solvers, 
+available as part of
+[scipy.optimize](http://docs.scipy.org/doc/scipy-0.13.0/reference/optimize.html):
+
+* [Sequential Least Squares Programming (SLSQP)](http://docs.scipy.org/doc/scipy-0.13.0/reference/generated/scipy.optimize.fmin_slsqp.html)
+* [Constrained Optimization By Linear Approximations (COBYLA)](http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.optimize.fmin_cobyla.html)
+
+SLSQP allows us to specify both
+_bounds_ and _constraints_ on the optimization system.
+In fact, one can specify an arbitrary number of
+equality and inequality constraints.
+COBYLA, on the other hand, doesn't support bounds,
+or inequality constraints.
 
 ### Results
 
-_Coming soon_
+_Coming soon._
+
+
 
 
