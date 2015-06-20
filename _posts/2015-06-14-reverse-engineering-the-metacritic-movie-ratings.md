@@ -282,6 +282,8 @@ available as part of
 |---------|
 
 
+.
+
 Note that $$y(\theta)$$ (and therefore $$f(\theta)$$) satisfies
 the differentiability requirement of SLSQP.
 
@@ -318,35 +320,112 @@ function for both solvers by simply tweaking these weights.
 
 ### Results
 
-Finally, we can get to the fruits of our labor.
+After removing ratings from insignificant critics,
+I constructed a training set of about 2800 ratings
+of 190 movies by 188 critics.
+Here are some findings from running the solver
+on this training set:
 
-I collected x ratings of y movies by z critics.
-After removing _insignificant_ critics, I was
-left with x' ratings by z' critics.
+* I was actually unable to get either SLSQP or COBYLA
+to ever successfully converge on a solution.
+Most of the times, both routines finished their iterations
+and failed with errors of this form:
 
-I chose t of the y movies for my training set.
+~~~
+optimization failed [8]: Positive directional derivative for linesearch
+optimization failed [2]: Maximum number of function evaluations has been exceeded
+~~~
 
-The top 20 most influential critics,
-as obtained by running SLSQP on this set of movies
-was the following:
+* The $$\theta$$ values (_i.e._, critic weights)
+learned by these solvers
+were often _way_ outside the interval $$[0, 1]$$.
+I am not sure why this is so.
 
-...
+If you have experience with the numpy optimization
+library, I'd love to hear about suggestions you may
+have on how to fix these errors.
 
-Also, the corresponding theta values were able
-to predict metascores for the remaining y - t
-movies with an accuracy of r1%.
+However, what was almost equally interesting was that the
+learned $$\theta$$ values were still able to successfully
+predict metascores for movies in the test set.
 
-For another test, I again chose 
-t of the y movies for my training set.
+The following table lists
+the critic weights learned using the above training set
+with each optimization routine.
+Note that the weights are expressed as a percentage
+of the weight for the _top_ critic in each list.
+So, for example, according to SLSQP,
+a review by Noel Murray is
+given 64% of the importance that is given
+to a review by Mike McCahill.
 
-The top 20 most influential critics,
-as obtained by running COBYLA on this set of movies
-was the following:
+| SLSQP || COBYLA ||
+| Weight | Critic | Weight | Critic |
+ :-: | :- | :-:|:- 
+| $$\cdot$$ | Mike McCahill (The Telegraph)              | $$\cdot$$ | Entertainment Weekly
+| 68.396474 | Dave Calhoun (Time Out London)             | 99.982343 | Jessica Kiang (The Playlist)
+| 64.046236 | Noel Murray (The Dissolve)                 | 64.634147 | Mike D'Angelo (The A.V. Club)
+| 44.510982 | Fionnuala Halligan (Screen International)  | 51.022980 | Marc Savlov (Austin Chronicle)
+| 41.091489 | Katie Walsh (Los Angeles Times)            | 46.038287 | Tom Russo (Boston Globe)
+| 36.862072 | Stephen Farber (The Hollywood Reporter)    | 33.931881 | Mike McCahill (The Telegraph)
+| 34.713074 | Mike Scott (New Orleans Times-Picayune)    | 29.630390 | Leslie Felperin (The Hollywood Reporter)
+| 31.991243 | Jesse Cataldo (Slant Magazine)             | 27.551365 | Jay Weissberg (Variety)
+| 29.335468 | Roger Moore (Tribune News Service)         | 22.482233 | The Guardian
+| 28.038652 | Nicolas Rapold (The New York Times)        | 21.749581 | David Parkinson (Empire)
+| 27.924488 | Tom Russo (Boston Globe)                   | 19.680719 | Andy Webster (The New York Times)
+| 27.193219 | Tirdad Derakhshani (Philadelphia Inquirer) | 16.637660 | Sheila O'Malley (RogerEbert.com)
+| 24.961678 | Stephanie Merry (Washington Post)          | 16.253025 | Marjorie Baumgarten (Austin Chronicle)
+| 24.093929 | Slant Magazine                             | 16.076699 | Bob Mondello (NPR)
+| 22.892765 | Carson Lund (Slant Magazine)               | 15.954304 | Dennis Harvey (Variety)
+| 21.849781 | Jesse Hassenger (The A.V. Club)            | 15.867666 | Steve Macfarlane (Slant Magazine)
+| 20.202264 | Neil Genzlinger (The New York Times)       | 15.829029 | Simon Abrams (RogerEbert.com)
+| 19.658871 | Jen Chaney (The Dissolve)                  | 15.726588 | Gary Goldstein (Los Angeles Times)
+| 19.328043 | Joe Leydon (Variety)                       | 15.685218 | Noel Murray (The Dissolve)
+| 19.110881 | Mark Olsen (Los Angeles Times)             | 15.604939 | Richard Brody (The New Yorker)
 
-...
+.
 
-Also, the corresponding theta values were able
-to predict metascores for the remaining y - t
-movies with an accuracy of r2%.
+I should clarify that the top 20 list can change from one run to the next,
+since it depends on the training set we choose, and the kind of explorations
+of the search space performed by the solvers in their iterations.
+
+We next show the _accuracy_ of the learned critic weights
+in predicting the metascore for movies in the test set.
+Our test set had about 60 movies.
+
+The following table lists the RMSE error between
+the predicted and the actual metascores for each optimization
+routine.
+
+| SLSQP | COBYLA |
+|----------------|
+| 1.042976 | 0.719814 |
+
+.
+
+For example, the excellent Scientology documentary from HBO,
+[Going Clear](http://www.imdb.com/title/tt4257858/),
+has
+[a metascore of 81](http://www.metacritic.com/movie/going-clear-scientology-and-the-prison-of-belief).
+SLSQP predicted a score of 81.32 while COBYLA predicted a score of 84.16
+for this documentary.
+Not bad!
 
 
+
+## Takeaways
+
+Working out the math was obviously fun!
+I got to brush up on my long defunct skills with numpy, scipy, matplotlib, etc.
+But I also realized that even a toy project
+like this one can end up demanding
+substantial time and attention, especially if it is something you want to share
+with the rest of the world.
+For example, I ended up using `setup.py` and creating a proper
+Python package for all the code.
+Writing out this blog post was also extremely useful because
+it clarified my own thinking on the topic. I was actually
+able to go back and refactor the code to better match
+the implementation pipeline I described above.
+If anything, this exercise has strengthened my resolve to write
+about a lot more frequently.
