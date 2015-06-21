@@ -7,27 +7,30 @@ tags: [optimization,metacritic,machine learning,visualization,math,computer scie
 ---
 {% include JB/setup %}
 
-_Note: All related code is available on [my github](https://github.com/shashank025/metacritic-weights)._
+_Where I (successfully?) attempt to reverse engineer
+the relative weights that the website
+[metacritic](http://www.metacritic.com/)
+assigns to movie critics._
 
-[metacritic](http://www.metacritic.com/) is a popular site that computes an
-aggregate _metascore_ for each movie as a weighted average of individual critic scores.
-Reviewers from major periodicals may have a greater effect on a movie review
-on average than niche ones.
-Tantalizingly, the [metacritic FAQ Page](http://www.metacritic.com/faq) says:
+metacritic is a popular site that computes an
+aggregate **metascore** for each movie.
+The metascore is a _weighted average_ of individual critic scores.
+The [metacritic FAQ Page](http://www.metacritic.com/faq) says:
 
 > Q: Can you tell me how each of the different critics are weighted in your formula?
 >
 > A: Absolutely not. 
 
 That sounds like a challenge to me.
-It _should_ be possible to infer the relative weights for movie critics
-using standard machine learning/optimization techniques.
-In fact, if we do this right, not only will we able to
-tell what critics are more important than others,
-but we should also be able to correctly predict the metascore
+Using standard machine learning/optimization techniques,
+we should be able to
+tell what critics are more important than others.
+In fact, the same techniques
+should also allow us to correctly predict the metascore
 for any new movie (given the individual critic ratings).
-
 This post describes my attempt to build such a system.
+
+_Note: All related code is available on [my github](https://github.com/shashank025/metacritic-weights)._
 
 ### The Model
 
@@ -130,7 +133,7 @@ But the function is still _smooth_ (_i.e._, _differentiable_).
 </a>
 
 Now consider the $$m$$-vector $$d(\theta) = p - y(\theta)$$.
-This vector represents a measure of how _off_ the predictions
+This vector is a measure of how _off_ the predictions
 are from actual metascores for
 a given $$\theta$$.
 We will try to find a $$\theta$$
@@ -311,23 +314,30 @@ $$
 
 where $$P_h$$ and $$P_b$$ are configurable weights that decide
 how much we should _penalize_ the optimization algorithm when it
-chooses a $$\theta$$ that doesn't lie on the affine hyperplane,
-and when it chooses $$\theta_j$$ values outside the interval
-$$[0, 1]$$ respectively.
+chooses:
+
+* a $$\theta$$ that doesn't lie on the affine hyperplane,
+and
+* $$\theta_j$$ values outside the interval
+$$[0, 1]$$,
+
+respectively.
+
 Setting both $$P_h$$ and $$P_b$$ to 0 reduces our objective
 function to its original form, so we can use the same
 function for both solvers by simply tweaking these weights.
 
 ### Results
 
-After removing ratings from insignificant critics,
-I constructed a training set of about 2800 ratings
-of 190 movies by 188 critics.
-Here are some findings from running the solver
-on this training set:
+Before I actually launch into details, I should note
+the following issues right at the outset:
 
 * I was actually unable to get either SLSQP or COBYLA
 to ever successfully converge on a solution.
+* The $$\theta$$ values (_i.e._, critic weights)
+learned by these solvers
+were often _way_ outside the interval $$[0, 1]$$.
+
 Most of the times, both routines finished their iterations
 and failed with errors of this form:
 
@@ -336,96 +346,100 @@ optimization failed [8]: Positive directional derivative for linesearch
 optimization failed [2]: Maximum number of function evaluations has been exceeded
 ~~~
 
-* The $$\theta$$ values (_i.e._, critic weights)
-learned by these solvers
-were often _way_ outside the interval $$[0, 1]$$.
-I am not sure why this is so.
-
 If you have experience with the numpy optimization
 library, I'd love to hear about suggestions you may
-have on how to fix these errors.
+have on how to deal with these errors.
 
-However, what was almost equally interesting was that the
-learned $$\theta$$ values were still able to successfully
+Perhaps more interestingly, in spite of the above issues,
+the learned $$\theta$$ values were still able to successfully
 predict metascores for movies in the test set.
 
+After removing ratings from insignificant critics,
+I constructed a training set of about 2800 ratings
+of 190 movies by 188 critics.
+
 The following table lists
-the critic weights learned using the above training set
+the **top 20** critics by weight
+learned using the above training set
 with each optimization routine.
 Note that the weights are expressed as a percentage
 of the weight for the _top_ critic in each list.
+Interestingly enough,
+both algorithms think
+[Mike Scott of the New Orleans Times-Picayune](http://connect.nola.com/user/mbscott/posts.html)
+is the metacritic MVP.
 So, for example, according to SLSQP,
-a review by Noel Murray is
-given 64% of the importance that is given
-to a review by Mike McCahill.
+a review by Justin Lowe carries only
+95% of the importance that is given
+to a review by Mike Scott.
 
 | SLSQP || COBYLA ||
 | Weight | Critic | Weight | Critic |
  :-: | :- | :-:|:- 
-| $$\cdot$$ | Mike McCahill (The Telegraph)              | $$\cdot$$ | Entertainment Weekly
-| 68.396474 | Dave Calhoun (Time Out London)             | 99.982343 | Jessica Kiang (The Playlist)
-| 64.046236 | Noel Murray (The Dissolve)                 | 64.634147 | Mike D'Angelo (The A.V. Club)
-| 44.510982 | Fionnuala Halligan (Screen International)  | 51.022980 | Marc Savlov (Austin Chronicle)
-| 41.091489 | Katie Walsh (Los Angeles Times)            | 46.038287 | Tom Russo (Boston Globe)
-| 36.862072 | Stephen Farber (The Hollywood Reporter)    | 33.931881 | Mike McCahill (The Telegraph)
-| 34.713074 | Mike Scott (New Orleans Times-Picayune)    | 29.630390 | Leslie Felperin (The Hollywood Reporter)
-| 31.991243 | Jesse Cataldo (Slant Magazine)             | 27.551365 | Jay Weissberg (Variety)
-| 29.335468 | Roger Moore (Tribune News Service)         | 22.482233 | The Guardian
-| 28.038652 | Nicolas Rapold (The New York Times)        | 21.749581 | David Parkinson (Empire)
-| 27.924488 | Tom Russo (Boston Globe)                   | 19.680719 | Andy Webster (The New York Times)
-| 27.193219 | Tirdad Derakhshani (Philadelphia Inquirer) | 16.637660 | Sheila O'Malley (RogerEbert.com)
-| 24.961678 | Stephanie Merry (Washington Post)          | 16.253025 | Marjorie Baumgarten (Austin Chronicle)
-| 24.093929 | Slant Magazine                             | 16.076699 | Bob Mondello (NPR)
-| 22.892765 | Carson Lund (Slant Magazine)               | 15.954304 | Dennis Harvey (Variety)
-| 21.849781 | Jesse Hassenger (The A.V. Club)            | 15.867666 | Steve Macfarlane (Slant Magazine)
-| 20.202264 | Neil Genzlinger (The New York Times)       | 15.829029 | Simon Abrams (RogerEbert.com)
-| 19.658871 | Jen Chaney (The Dissolve)                  | 15.726588 | Gary Goldstein (Los Angeles Times)
-| 19.328043 | Joe Leydon (Variety)                       | 15.685218 | Noel Murray (The Dissolve)
-| 19.110881 | Mark Olsen (Los Angeles Times)             | 15.604939 | Richard Brody (The New Yorker)
+$$\cdot$$ | Mike Scott (New Orleans Times-Picayune)   | $$\cdot$$ | Mike Scott (New Orleans Times-Picayune)
+0.949948 | Justin Lowe (The Hollywood Reporter)      | 0.902288 | Slant Magazine
+0.929495 | Jordan Hoffman (The Guardian)             | 0.900024 | Ronnie Scheib (Variety)
+0.914186 | Marjorie Baumgarten (Austin Chronicle)    | 0.890113 | Wes Greene (Slant Magazine)
+0.910820 | Fionnuala Halligan (Screen International) | 0.887845 | Chris Cabin (Slant Magazine)
+0.909801 | James Mottram (Total Film)                | 0.885791 | Martin Tsai (Los Angeles Times)
+0.904564 | Variety                                   | 0.863626 | Lawrence Toppman (Charlotte Observer)
+0.903029 | Guy Lodge (Variety)                       | 0.858237 | Anthony Lane (The New Yorker)
+0.897749 | Inkoo Kang (TheWrap)                      | 0.845864 | Fionnuala Halligan (Screen International)
+0.894605 | indieWIRE                                 | 0.834088 | Boyd van Hoeij (The Hollywood Reporter)
+0.892237 | Ben Kenigsberg (The New York Times)       | 0.820908 | Variety
+0.882656 | Mike D'Angelo (The Dissolve)              | 0.814152 | Nicolas Rapold (The New York Times)
+0.875550 | Simon Abrams (Village Voice)              | 0.735623 | Justin Lowe (The Hollywood Reporter)
+0.875385 | Martin Tsai (Los Angeles Times)           | 0.629166 | Mark Olsen (Los Angeles Times)
+0.875062 | Manohla Dargis (The New York Times)       | 0.625141 | The Globe and Mail (Toronto)
+0.874889 | Kyle Smith (New York Post)                | 0.567734 | James Berardinelli (ReelViews)
+0.872482 | Nicolas Rapold (The New York Times)       | 0.562606 | Peter Sobczynski (RogerEbert.com)
+0.869911 | James Berardinelli (ReelViews)            | 0.558980 | John Anderson (Wall Street Journal)
+0.863118 | Ronnie Scheib (Variety)                   | 0.520855 | Steve Macfarlane (Slant Magazine)
+0.860796 | Nikola Grozdanovic (The Playlist)         | 0.510842 | Jordan Mintzer (The Hollywood Reporter)
 
 .
 
 I should clarify that the top 20 list can change from one run to the next,
-since it depends on the training set we choose, and the kind of explorations
-of the search space performed by the solvers in their iterations.
+since it depends on the training set chosen (which is at random).
 
-We next show the _accuracy_ of the learned critic weights
-in predicting the metascore for movies in the test set.
-Our test set had about 60 movies.
+Next, we show a few sample predicted metascores:
 
-The following table lists the RMSE error between
-the predicted and the actual metascores for each optimization
-routine.
-
-| SLSQP | COBYLA |
+| Movie | Actual Metascore | Predicted (SLSQP) | Predicted (COBYLA) |
 |----------------|
-| 1.042976 | 0.719814 |
+[Survivor](http://www.imdb.com/title/tt3247714/)                | [26](http://www.metacritic.com/movie/survivor)               | 30 (16.18%)  | 33 (28.12%)  
+[Entourage](http://www.imdb.com/title/tt1674771/)               | [38](http://www.metacritic.com/movie/entourage)              | 57 (50.25%)  | 43 (15.65%)  
+[Chappie](http://www.imdb.com/title/tt1823672/)                 |  [41](http://www.metacritic.com/movie/chappie)                | 46 (12.89%)  | 43 (6.00%)   
+[Dreamcatcher](http://www.imdb.com/title/tt3215846/)            |  [86](http://www.metacritic.com/movie/dreamcatcher-2015)      | 77 (-10.46%) | 83 (-2.77%)  
+[Avengers: Age of Ultron](http://www.imdb.com/title/tt2395427/) |  [66](http://www.metacritic.com/movie/avengers-age-of-ultron) | 62 (-5.05%)  | 67 (1.57%)
+[Gemma Bovery](http://www.imdb.com/title/tt2788556/)            |  [57](http://www.metacritic.com/movie/gemma-bovery)           | 0 (-100.00%) | 61 (7.15%)
+[Alleluia](http://www.imdb.com/title/tt3218580/)                | [84](http://www.metacritic.com/movie/alleluia)               | 90 (7.41%)   | 87 (4.13%)   
+|----------------|
 
 .
 
-For example, the excellent Scientology documentary from HBO,
-[Going Clear](http://www.imdb.com/title/tt4257858/),
-has
-[a metascore of 81](http://www.metacritic.com/movie/going-clear-scientology-and-the-prison-of-belief).
-SLSQP predicted a score of 81.32 while COBYLA predicted a score of 84.16
-for this documentary.
-Not bad!
+With a test set of size 60, the movie predictions
+by the two algorithms had the following
+[RMSE](https://en.wikipedia.org/wiki/Root-mean-square_deviation) values:
 
+| SLSQP | COBYLA |
+|----------------|
+0.053437 | 0.016942
+|----------------|
 
+.
 
 ## Takeaways
 
-Working out the math was obviously fun!
-I got to brush up on my long defunct skills with numpy, scipy, matplotlib, etc.
-But I also realized that even a toy project
-like this one can end up demanding
-substantial time and attention, especially if it is something you want to share
+* Working out the math was obviously fun!
+    * I got to brush up on my long defunct skills with numpy, scipy, matplotlib, etc.
+* Even a toy project like this one can end up demanding
+substantial time and attention,
+especially if it is something you want to share
 with the rest of the world.
-For example, I ended up using `setup.py` and creating a proper
-Python package for all the code.
-Writing out this blog post was also extremely useful because
+For example, I ended up setting up proper Python package management for all the code.
+* Writing this blog post was also extremely useful because
 it clarified my own thinking on the topic. I was actually
 able to go back and refactor the code to better match
 the implementation pipeline I described above.
-If anything, this exercise has strengthened my resolve to write
-about a lot more frequently.
+
+---
