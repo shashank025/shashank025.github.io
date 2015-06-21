@@ -114,7 +114,7 @@ $$
 
 How does this function vary with $$\theta$$ (once we fix the $$r_{ij}$$ values)?
 I wrote up
-[a little script to plot $$y_4 (\theta_1, \theta_2)$$](https://github.com/shashank025/metacritic-weights/blob/master/ytheta.py)
+[a little script to plot $$y_4 (\theta_1, \theta_2)$$](https://github.com/shashank025/metacritic-weights/blob/master/bin/mc_ytheta)
 for the example involving the movie _Ex Machina_
 (I fixed the critic ratings to
 $$r_{41} = 79$$ and $$r_{42} = 67$$;
