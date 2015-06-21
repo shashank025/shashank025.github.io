@@ -83,7 +83,7 @@ JB :
   comments :
     provider : disqus
     disqus :
-      short_name : shashankramaprasad
+      short_name : amostlytechnicalblog
     livefyre :
       site_id : 123
     intensedebate :
