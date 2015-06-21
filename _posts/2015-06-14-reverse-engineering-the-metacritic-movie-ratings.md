@@ -285,8 +285,6 @@ available as part of
 |---------|
 
 
-.
-
 Note that $$y(\theta)$$ (and therefore $$f(\theta)$$) satisfies
 the differentiability requirement of SLSQP.
 
@@ -396,8 +394,9 @@ $$\cdot$$ | Mike Scott (New Orleans Times-Picayune)   | $$\cdot$$ | Mike Scott (
 0.869911 | James Berardinelli (ReelViews)            | 0.558980 | John Anderson (Wall Street Journal)
 0.863118 | Ronnie Scheib (Variety)                   | 0.520855 | Steve Macfarlane (Slant Magazine)
 0.860796 | Nikola Grozdanovic (The Playlist)         | 0.510842 | Jordan Mintzer (The Hollywood Reporter)
+|----------------|
 
-.
+
 
 I should clarify that the top 20 list can change from one run to the next,
 since it depends on the training set chosen (which is at random).
@@ -415,7 +414,7 @@ Next, we show a few sample predicted metascores:
 [Alleluia](http://www.imdb.com/title/tt3218580/)                | [84](http://www.metacritic.com/movie/alleluia)               | 90 (7.41%)   | 87 (4.13%)   
 |----------------|
 
-.
+
 
 With a test set of size 60, the movie predictions
 by the two algorithms had the following
@@ -426,7 +425,7 @@ by the two algorithms had the following
 0.053437 | 0.016942
 |----------------|
 
-.
+
 
 ## Takeaways
 
