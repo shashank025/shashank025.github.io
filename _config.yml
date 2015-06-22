@@ -8,7 +8,7 @@ highlighter: pygments
 # Themes are encouraged to use these universal variables 
 # so be sure to set them if your theme uses them.
 #
-title : A (Mostly) Technical Blog
+title : A Mostly Technical Blog
 tagline:
 author :
   name : Shashank Ramaprasad
