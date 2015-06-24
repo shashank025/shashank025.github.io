@@ -5,10 +5,10 @@ permalink: /about/
 group: navigation
 ---
 
-<a href="/assets/images/turtlerock.jpg">
+<a href="/assets/images/shashank-ramaprasad.jpg">
 <img
     width="241" height="242"
-    src="/assets/images/turtlerock.jpg"
+    src="/assets/images/shashank-ramaprasad.jpg"
     title="Picture of Shashank Ramaprasad [click/touch to zoom]"
     alt="Picture of Shashank Ramaprasad [click/touch to zoom]" />
 </a>
