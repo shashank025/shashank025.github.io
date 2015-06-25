@@ -7,6 +7,7 @@ group: navigation
 
 <a href="/assets/images/shashank-ramaprasad.jpg">
 <img
+    style="padding: 10px;"
     width="241" height="242"
     src="/assets/images/shashank-ramaprasad.jpg"
     title="Picture of Shashank Ramaprasad [click/touch to zoom]"
@@ -19,3 +20,6 @@ I am currently a Software Architect at
 where I design and build software systems for online advertising in the
 [Media Optimizer](https://www.adobe.com/marketing-cloud/online-advertising-management.html)
 group.
+The opinions expressed on this website
+are solely my own, and do not in any way
+reflect those of any employers of mine.

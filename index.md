@@ -1,5 +1,5 @@
 ---
-title: Welcome!
+title: A Mostly Technical Blog, by Shashank Ramaprasad
 layout: page
 ---
 {% include JB/setup %}
