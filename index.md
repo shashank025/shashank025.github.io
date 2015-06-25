@@ -1,11 +1,12 @@
 ---
-title: A Mostly Technical Blog, by Shashank Ramaprasad
+title: A Mostly Technical Blog
 layout: page
 ---
 {% include JB/setup %}
 
-My collected writings on technical topics (software engineering, computer science and math). Occasionally, I may write about culture and politics.
-    
+Shashank Ramaprasad's collected writings on mostly technical topics
+(software engineering, computer science and math).
+
 ## Posts
 
 <ul class="posts">
