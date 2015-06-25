@@ -9,7 +9,7 @@ highlighter: pygments
 # so be sure to set them if your theme uses them.
 #
 title : A Mostly Technical Blog
-tagline:
+tagline: The collected writings of Shashank Ramaprasad, an engineer in Silicon Valley, California.
 author :
   name : Shashank Ramaprasad
   email : shashank.ramaprasad+blog@gmail.com
