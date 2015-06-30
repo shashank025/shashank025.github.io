@@ -5,6 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="{{ site.tagline }}" name="description">
  
+    {% if page.url == "/404.html" %}
+    <meta http-equiv="refresh" content="5; url=/">
+    {% endif %}
 
     <title>{{ page.title }}</title>
     {% if page.description %}<meta name="description" content="{{ page.description }}">{% endif %}
