@@ -20,6 +20,8 @@ I am currently a Software Architect at
 where I design and build software systems for online advertising in the
 [Media Optimizer](https://www.adobe.com/marketing-cloud/online-advertising-management.html)
 group.
+Check out [my resume](/resume/).
+
 The opinions expressed on this website
 are solely my own, and do not in any way
 reflect those of any employers of mine.
