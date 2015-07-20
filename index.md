@@ -12,7 +12,6 @@ Shashank Ramaprasad's collected writings on mostly technical topics
 <ul class="posts">
   {% for post in site.posts %}
     <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ BASE_PATH }}{{ post.url }}">{{ post.title }}</a>
-        <ul> <li> {{ post.content | strip_html | truncatewords: 25 }} </li> </ul>
     </li>
   {% endfor %}
 </ul>

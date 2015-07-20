@@ -1,9 +1,11 @@
 ---
 layout: page
-title: Shashank Ramaprasad - CV
+title: Shashank Ramaprasad - Resume
 permalink: /resume/
 ---
 {% include JB/setup %}
+
+I have considerable experience with (and a passion for) building scalable software systems.
 
 ### Projects/Code
 
@@ -11,18 +13,15 @@ permalink: /resume/
 
 ### Education
 
-* Brown University, Providence RI, USA, _Sc.M. Computer Science_, 2005.
-* Birla Institute of Technology and Science, Pilani, India, _B.E. (Hons.) Computer Science_, 2003.
+2005 | _Sc.M. Computer Science_ | Brown University, Providence RI, USA.
+2003 | _B.E. (Hons.) Computer Science_ | Birla Institute of Technology and Science, Pilani, India.
 
 
-### Representative Experience
+### Professional Experience
 
-#### Software Architect at Adobe Systems, Inc., 2012 -- _present_.
-
-#### Sr. Software Engineer at Efficient Frontier, Inc., 2010 -- 2012.
-
-#### Core Platform Engineer at Efficient Frontier, Inc., 2007 -- 2010.
-
+2012 -- _present_ | _Software Architect_ | Adobe Systems, Inc.
+2010 -- 2012 | _Sr. Software Engineer_ | Efficient Frontier, Inc.
+2007 -- 2010 | _Core Platform Engineer_ | Efficient Frontier, Inc.
 
 * Designed and implemented a spend control system
 for real-time bidding (RTB) campaigns that currently handles
@@ -51,7 +50,7 @@ etc.
 search, social and display (including RTB).
 
 
-#### Software Engineer at Teragram Corporation, 2005 -- 2007.
+2005 -- 2007 | _Software Engineer_  | Teragram Corporation.
 
 * Involved in design, development and maintenance of
 Teragram _Direct Answers_
