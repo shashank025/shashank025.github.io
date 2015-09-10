@@ -5,10 +5,8 @@ permalink: /km2pg/
 ---
 {% include JB/setup %}
 
-**km2pg** is open source software to
-load your
-website/app analytics data stream
-from
+**km2pg** is open source software to load
+your website/app analytics data stream from
 [Kissmetrics](https://www.kissmetrics.com/)
 into a
 [Postgres](http://www.postgresql.org/) database
@@ -119,9 +117,9 @@ a query like the following could do the job:
 ~~~
 select count(1)
   from events e
-  join event_actions using (actionid) -- an event in KM can have more than one action
+  join event_actions using (eventid) -- an event in KM can have more than one action
   join actions a using (actionid)
- where a.name = 'checkout successful';
+ where a.name = 'checkout successful'
    and e.t >= now() - interval '1 week';
 ~~~
 
