@@ -27,8 +27,22 @@ author:
 excerpt: !ruby/object:Hpricot::Doc
   options: {}
 ---
-<p>I <a title="previous post on Bay Bridges Challenge" href="http://shashankr.wordpress.com/2013/12/16/a-graph-theoretic-approach-to-the-bay-bridges-challenge/">previously wrote</a> about the <a title="Bay Bridges Challenge" href="https://www.codeeval.com/open_challenges/109/">Bay Bridges Challenge</a>, hosted at <a title="CodeEval" href="https://www.codeeval.com/">CodeEval</a>. In my last post, I showed that the problem could be modeled as a <a title="Wikipedia page on Vertex Cover" href="http://en.wikipedia.org/wiki/Vertex_cover">minimum vertex cover</a> problem, and wondered if we can do better than iterating through the <a title="Wikipedia page on Power Sets" href="http://en.wikipedia.org/wiki/Power_set">power set</a> of bridges, and picking the highest cardinality subset that is feasible. I said that most likely,</p>
+
+I
+[previously wrote]({% post_url 2013-12-16-a-graph-theoretic-approach-to-the-bay-bridges-challenge %})
+about the
+<a title="Bay Bridges Challenge" href="https://www.codeeval.com/open_challenges/109/">Bay Bridges Challenge</a>,
+hosted at
+<a title="CodeEval" href="https://www.codeeval.com/">CodeEval</a>.
+In my last post, I showed that the problem could be modeled as a
+<a title="Wikipedia page on Vertex Cover" href="http://en.wikipedia.org/wiki/Vertex_cover">minimum vertex cover</a> problem,
+and wondered if we can do better than iterating through the
+<a title="Wikipedia page on Power Sets" href="http://en.wikipedia.org/wiki/Power_set">power set</a>
+of bridges, and picking the highest cardinality subset that is feasible.
+I said that most likely,
+
 <blockquote><p>there is additional structure inherent in the problem, that can be exploited to make the problem more tractable.</p></blockquote>
+
 <p>Spurred by some <a title="helpful comments on previous post about Bay Bridges challenge" href="http://shashankr.wordpress.com/2013/12/16/a-graph-theoretic-approach-to-the-bay-bridges-challenge/#comment-68">helpful recent comments</a>, I spent some more time on the problem. As it turns out, we <em>can</em> do better than an exhaustive search. But first, remember that a <strong><em>feasible solution</em></strong> is any set of bridges with <strong>no</strong> intersections. Our task is to find <em>an</em> <strong><em>optimal solution</em></strong>, which is simply the <em>largest</em> such feasible solution (note that there can be more than one).</p>
 
 <strong><em>Claim 1:</em></strong> If there is no feasible solution with $$ k $$ bridges, then there cannot be a larger feasible solution.
