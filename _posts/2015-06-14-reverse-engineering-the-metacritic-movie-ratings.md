@@ -2,7 +2,7 @@
 layout: post
 title: "Reverse engineering Metacritic"
 description: ""
-category: 
+category:
 tags: [optimization,metacritic,machine learning,visualization,math,computer science]
 ---
 {% include JB/setup %}
@@ -19,7 +19,7 @@ The [metacritic FAQ Page](http://www.metacritic.com/faq) says:
 
 > Q: Can you tell me how each of the different critics are weighted in your formula?
 >
-> A: Absolutely not. 
+> A: Absolutely not.
 
 That sounds like a challenge to me.
 Using standard machine learning/optimization techniques,
@@ -274,7 +274,7 @@ constrained optimization problems of the type we
 described above, but not all of them are
 freely available.
 
-I tried the following two solvers, 
+I tried the following two solvers,
 available as part of
 [scipy.optimize](http://docs.scipy.org/doc/scipy-0.13.0/reference/optimize.html):
 
@@ -373,7 +373,7 @@ to a review by Mike Scott.
 
 | SLSQP || COBYLA ||
 | Weight | Critic | Weight | Critic |
- :-: | :- | :-:|:- 
+ :-: | :- | :-:|:-
 $$\cdot$$ | Mike Scott (New Orleans Times-Picayune)   | $$\cdot$$ | Mike Scott (New Orleans Times-Picayune)
 0.949948 | Justin Lowe (The Hollywood Reporter)      | 0.902288 | Slant Magazine
 0.929495 | Jordan Hoffman (The Guardian)             | 0.900024 | Ronnie Scheib (Variety)
@@ -405,13 +405,13 @@ Next, we show a few sample predicted metascores:
 
 | Movie | Actual Metascore | Predicted (SLSQP) | Predicted (COBYLA) |
 |----------------|
-[Survivor](http://www.imdb.com/title/tt3247714/)                | [26](http://www.metacritic.com/movie/survivor)               | 30 (16.18%)  | 33 (28.12%)  
-[Entourage](http://www.imdb.com/title/tt1674771/)               | [38](http://www.metacritic.com/movie/entourage)              | 57 (50.25%)  | 43 (15.65%)  
-[Chappie](http://www.imdb.com/title/tt1823672/)                 |  [41](http://www.metacritic.com/movie/chappie)                | 46 (12.89%)  | 43 (6.00%)   
-[Dreamcatcher](http://www.imdb.com/title/tt3215846/)            |  [86](http://www.metacritic.com/movie/dreamcatcher-2015)      | 77 (-10.46%) | 83 (-2.77%)  
+[Survivor](http://www.imdb.com/title/tt3247714/)                | [26](http://www.metacritic.com/movie/survivor)               | 30 (16.18%)  | 33 (28.12%)
+[Entourage](http://www.imdb.com/title/tt1674771/)               | [38](http://www.metacritic.com/movie/entourage)              | 57 (50.25%)  | 43 (15.65%)
+[Chappie](http://www.imdb.com/title/tt1823672/)                 |  [41](http://www.metacritic.com/movie/chappie)                | 46 (12.89%)  | 43 (6.00%)
+[Dreamcatcher](http://www.imdb.com/title/tt3215846/)            |  [86](http://www.metacritic.com/movie/dreamcatcher-2015)      | 77 (-10.46%) | 83 (-2.77%)
 [Avengers: Age of Ultron](http://www.imdb.com/title/tt2395427/) |  [66](http://www.metacritic.com/movie/avengers-age-of-ultron) | 62 (-5.05%)  | 67 (1.57%)
 [Gemma Bovery](http://www.imdb.com/title/tt2788556/)            |  [57](http://www.metacritic.com/movie/gemma-bovery)           | 0 (-100.00%) | 61 (7.15%)
-[Alleluia](http://www.imdb.com/title/tt3218580/)                | [84](http://www.metacritic.com/movie/alleluia)               | 90 (7.41%)   | 87 (4.13%)   
+[Alleluia](http://www.imdb.com/title/tt3218580/)                | [84](http://www.metacritic.com/movie/alleluia)               | 90 (7.41%)   | 87 (4.13%)
 |----------------|
 
 
