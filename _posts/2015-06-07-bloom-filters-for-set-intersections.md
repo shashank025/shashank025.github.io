@@ -61,7 +61,7 @@ given that no element in $$Q$$ belongs to $$S$$.
 But _how_ inaccurate?
 It is often easier to compute the probability of the complementary event
 $$ A \mid D $$,
-which is that the Bloom filter returns $$NO$$ for every element of $$Q$$.
+which is the event that the Bloom filter returns $$NO$$ for every element of $$Q$$.
 The probability that the Bloom filter returns $$NO$$ for a given element
 $$q \in Q$$ can be expressed by:
 
