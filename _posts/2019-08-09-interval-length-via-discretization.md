@@ -37,33 +37,25 @@ $$
 $$
 
 As we can see, this is pretty close to $$|I| = 5$$.
-This example makes it clear that
-if the set $$ I \cap \frac{\mathbb{Z}}{N} $$ can be expressed as
+So, if $$ | I \cap \frac{\mathbb{Z}}{N} | $$ can be expressed as
 $$N(b - a) + \epsilon$$ where $$\epsilon$$ is some constant,
 then the proposition pretty much holds _at the limit_.
-To get there, consider $$\frac{l}{N}$$ and $$\frac{h}{N}$$, the smallest and
-largest elements of the set ($$l, h \in \mathbb{Z}$$).
-Then, from our prior example, it is clear that the set cardinality can be
-expressed as:
+
+To formalize this intuition, consider $$\frac{l}{N}$$ and $$\frac{h}{N}$$,
+the smallest and largest elements of $$ I \cap \frac{\mathbb{Z}}{N} $$,
+where $$l, h \in \mathbb{Z}$$.
+From our prior example, it is clear that the cardinality of that set is:
 
 $$
 \vert I \cap \frac{\mathbb{Z}}{N} \vert = h - l + 1.
 $$
 
-Now, note that $$\frac{l}{N} \ge a$$ and $$\frac{(l - 1)}{N} \lt a$$,
-which can be rewritten as:
-
-$$
-Na \le l \lt (Na + 1).
-$$
-
-Similarly, we get:
-
-$$
-(Nb - 1) \lt h \le Nb.
-$$
-
-Plugging these inequalities into the expression for the interval size, we get:
+Next, note that by definition, $$\frac{l}{N} \ge a$$ and $$\frac{(l - 1)}{N} \lt a$$,
+so we get $$
+l \lt Na + 1
+$$. Similarly, we get $$
+h \gt Nb - 1$$. Plugging these inequalities into the expression for the interval size,
+we get:
 
 $$
 \vert I \cap \frac{\mathbb{Z}}{N} \vert = h - l + 1 \gt Nb - Na - 1.
@@ -72,17 +64,17 @@ $$
 which we can rewrite as:
 
 $$
-\vert I \cap \frac{\mathbb{Z}}{N} \vert = N(b - a) + \epsilon
+\vert I \cap \frac{\mathbb{Z}}{N} \vert = N(b - a) - 1 + \epsilon
 $$
 
-where $$\epsilon > -1$$ is a constant.
+where $$\epsilon > 0$$ is a constant.
 Plugging this back into the right hand side of the original assertion, we get:
 
 $$
 \begin{align*}
 \lim_{N \to \infty} \frac{|I \cap \frac{\mathbb{Z}}{N} |}{N}
-& = \lim_{N \to \infty} \frac{N(b - a) + \epsilon}{N} \\
-& = (b - a) +  \lim_{N \to \infty} \frac{\epsilon}{N} \\
-& = (b - a).
+& = \lim_{N \to \infty} \frac{N(b - a) - 1 + \epsilon}{N} \\
+& = (b - a) +  \lim_{N \to \infty} \frac{\epsilon - 1}{N} \\
+& = b - a.
 \end{align*}
 $$
