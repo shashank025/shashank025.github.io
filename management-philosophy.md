@@ -19,14 +19,14 @@ claim about their universal applicability._
 While ICs are largely responsible for delivering work assigned to them,
 leadership and management are largely responsible for _enabling_ 
 others to succeed. An underappreciated component of how leaders enable
-others is _setup_, which includes:
+others is _setup_, which includes providing:
 
-* Providing the right motivation (aka problem statement)
+* The right motivation (aka problem statement)
 * A clear definition of success
 * A roadmap
 * An execution plan
 * Measurable intermediate milestones
-* Defining ownership and processes for tracking execution, and
+* Ownership and processes for tracking execution, and
 * Course correcting along the way.
 
 While projects with good setup can fail, projects with bad setup _will_ fail.
