@@ -27,7 +27,7 @@ others is _setup_, which includes providing:
 * An execution plan
 * Measurable intermediate milestones
 * Ownership and processes for tracking execution, and
-* Course correcting along the way.
+* Course corrections along the way.
 
 While projects with good setup can fail, projects with bad setup _will_ fail.
 
