@@ -89,7 +89,7 @@ right for the team and for the company. Doing so _might_ benefit
 you in the short term, but is counterproductive in the long run,
 not just to the company, but also to yourself.
 
-## What you Can Expect From Me
+## What You Should Expect From Me
 
 Based on the philosophy I outlined above, you can expect that I will:
 
