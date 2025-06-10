@@ -11,6 +11,9 @@ I have considerable experience with:
 * Building scalable software systems, and
 * Delivering excellent products.
 
+Read
+<a href="/management-philosophy">my management philosophy</a>.
+
 ## Projects/Code
 
 [https://github.com/shashank025](https://github.com/shashank025)
